@@ -22,7 +22,6 @@
 #define DATA 0xFF
 #define BLACK 0xFF
 #define WHITE 0x00
-
 #define EMPTY 0x00
 
 #define MAX_COLUMNS 102
