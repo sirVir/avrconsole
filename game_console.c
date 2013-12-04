@@ -380,17 +380,18 @@ void draw_ball()
 
 {
 
+
 	int compar = 0;
 	if (row_ball <= 4 || row_ball >= 59)
 	{	
-		if((hor_pad^col_ball)<width)
+		if(((hor_pad>col_ball)?hor_pad-col_ball:col_ball-hor_pad)<width)
 			{dir_y=-dir_y;}
 		else return;
 	}
 
 	if (col_ball <= 4 || col_ball >= 97)
 	{
-		if((vert_pad^row_ball)<width)
+		if(((vert_pad>row_ball)?vert_pad-row_ball:row_ball-vert_pad)<width)
 			{dir_x=-dir_x;}
 		else return;
 	}
