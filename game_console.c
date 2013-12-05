@@ -1,5 +1,7 @@
 #include "game_console.h" 
 
+
+float vcc;
 byte page = 0;
 signed char column = 0;
 signed char row = 0;
