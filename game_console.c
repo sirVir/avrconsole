@@ -376,6 +376,16 @@ if ((_col_ball+2<103) && (_col_ball-2>=0) && (_row_ball-2>=0) && (_row_ball+2<63
 }
 
 
+void restart()
+{
+while (TRUE){
+color_screen(WHITE);
+_delay_ms(100);
+color_screen(BLACK);
+_delay_ms(100);
+}
+}
+
 void draw_ball()
 
 {
@@ -386,14 +396,14 @@ void draw_ball()
 	{	
 		if(((hor_pad>col_ball)?hor_pad-col_ball:col_ball-hor_pad)<width)
 			{dir_y=-dir_y;}
-		else return;
+		else restart();
 	}
 
 	if (col_ball <= 4 || col_ball >= 97)
 	{
 		if(((vert_pad>row_ball)?vert_pad-row_ball:row_ball-vert_pad)<width)
 			{dir_x=-dir_x;}
-		else return;
+		else restart();
 	}
 
 	draw_init_ball(row_ball+dir_y, col_ball+dir_x);
