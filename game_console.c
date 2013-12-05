@@ -11,11 +11,11 @@ byte key_status = 0x00;
 byte width=16;
 
 
-byte ball_array[5]={0b01110000,
-					0b11111000,
-					0b11111000,
-					0b11111000,
-					0b01110000,
+byte ball_array[5]={0b00001110,
+					0b00011111,
+					0b00011111,
+					0b00011111,
+					0b00001110,
 					};
 
 byte vert_pad = 0;
@@ -345,7 +345,8 @@ void draw_init_ball(byte _row_ball, byte _col_ball)
 		{
 			for (j=0;j<5;j++)
 			{
-				draw_pixel(_row_ball-2+i,_col_ball-2+j,1);
+				byte ball_pixel = (ball_array[j] & ( 1 << i )) >> i; // reading ball pixel from the ball array
+				draw_pixel(_row_ball-2+i,_col_ball-2+j,ball_pixel);
 			}
 		}
 		row_ball=_row_ball;
