@@ -179,6 +179,23 @@ void color_screen (byte color)
 	}
 }
 
+void draw_screen()
+{	
+	byte page;
+	
+	for (page = 0; page < MAX_PAGES; page++)
+	{	
+		byte column;
+		
+		for (column = 0; column<MAX_COLUMNS; column++)
+		{
+			select_page(page);
+			select_column(column);
+			LCD_data_tx(frame_buffer[column][page]);
+		}
+	}
+}
+
 void draw_pixel (byte _row, byte _column, byte _color)
 
 {	
@@ -324,7 +341,7 @@ void draw_pads(byte _hor_pad, byte _vert_pad)
 }
 
 
-void draw_init_ball(byte _row_ball, byte _col_ball)
+void draw_ball(byte _row_ball, byte _col_ball)
 
 
 {	
@@ -352,42 +369,25 @@ void draw_init_ball(byte _row_ball, byte _col_ball)
 		row_ball=_row_ball;
 		col_ball=_col_ball;
 
-	}/*
-if ((_col_ball+2<103) && (_col_ball-2>=0) && (_row_ball-2>=0) && (_row_ball+2<63))
-	{
-			draw_pixel(_row_ball-2,_col_ball,BLACK);
-			draw_pixel(_row_ball-1,_col_ball-1,BLACK);(ball_array[2]&(1 >> 2))
-			draw_pixel(_row_ball-1,_col_ball,BLACK);
-			draw_pixel(_row_ball-1,_col_ball+1,BLACK);
-			draw_pixel(_row_ball,_col_ball-2,BLACK);
-			draw_pixel(_row_ball,_col_ball-1,BLACK);
-			draw_pixel(_row_ball,_col_ball,BLACK);
-			draw_pixel(_row_ball,_col_ball+1,BLACK);
-			draw_pixel(_row_ball,_col_ball+2,BLACK);
-			draw_pixel(_row_ball+1,_col_ball-1,BLACK);
-			draw_pixel(_row_ball+1,_col_ball,BLACK);
-			draw_pixel(_row_ball+1,_col_ball+1,BLACK);
-			draw_pixel(_row_ball+2,_col_ball,BLACK);
-
-			row_ball=_row_ball;
-			col_ball=_col_ball;
-
 	}
-*/
 }
 
 
 void restart()
 {
-while (TRUE){
-color_screen(WHITE);
-_delay_ms(100);
-color_screen(BLACK);
-_delay_ms(100);
-}
+	int i = 0;
+	for (i=0; i<8; i++)
+	{
+		color_screen(BLACK);
+		_delay_ms(100);
+		color_screen(WHITE);
+		_delay_ms(100);
+	}
+	draw_ball(31,52);
+	draw_screen();
 }
 
-void draw_ball()
+void move_ball()
 
 {
 
@@ -407,7 +407,7 @@ void draw_ball()
 		else restart();
 	}
 
-	draw_init_ball(row_ball+dir_y, col_ball+dir_x);
+	draw_ball(row_ball+dir_y, col_ball+dir_x);
 
 
 }
@@ -599,7 +599,7 @@ int main(void)
 	interrupts_init();
 	pwm_init();
 	draw_init_pads(52,31);
-	draw_init_ball(31,52);
+	draw_ball(31,52);
 	timer1_init();
 	//adc_init();
 
@@ -626,6 +626,6 @@ ISR(TIMER2_OVF_vect)
 
 ISR (TIMER1_COMPA_vect)
 {
-draw_ball();
+move_ball();
 }
 
