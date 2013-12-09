@@ -561,11 +561,11 @@ void timer1_init()
 }
  
  
-/*void adc_init()
+void adc_init()
 {
-   ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // Set ADC prescalar to 128 - 125KHz sample rate @ 16MHz
+   ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // Set ADC prescalar to 128 - 63KHz sample rate @ 16MHz
 
-   ADMUX |= (1 << REFS0)|(1 << REFS1);  // Set ADC reference to internal 2.56
+   ADMUX |= (1 << REFS0)|(1 << REFS1);  // Set ADC reference to internal
    ADMUX |= (1 << ADLAR); // Left adjust ADC result to allow easy 8 bit reading
 
    // No MUX values needed to be changed to use ADC0
@@ -574,7 +574,7 @@ void timer1_init()
 
    ADCSRA |= (1 << ADEN);  // Enable ADC
    ADCSRA |= (1 << ADSC);  // Start A2D Conversions 
-};*/
+};
 
 
 int main(void)
@@ -603,7 +603,24 @@ int main(void)
 	draw_init_pads(52,31);
 	draw_ball(31,52);
 	timer1_init();
-	//adc_init();
+	adc_init();
+
+/*
+// This naive battery voltage meter does might require callibration with voltage supply in place of batteries.
+	
+	byte battbuff =0;
+	byte i;
+	for (i=0; i<10; i++)
+	{
+		if(ADCH < 130)
+		{	
+			_delay_ms(120);
+			battbuff +=1;
+		}
+	}
+
+	if (battbuff>=5)	BAT_LOW_LED(ON);
+*/
 
     while (TRUE)                //Master loop always true so always loop
 	{		
