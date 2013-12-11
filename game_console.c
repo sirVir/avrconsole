@@ -223,18 +223,15 @@ void draw_init_pads(byte _hor_pad, byte _vert_pad)
 	
 	byte i;
 	byte j;
-	byte width=16;
 	
-
-	
-
-	if ((_hor_pad+width<100) && (_hor_pad-width>=2) && (_vert_pad-width>0) && (_vert_pad+width<=62))
+		
+	if ((_hor_pad+width<100) && (_hor_pad-width>=2) && (_vert_pad-width>=0) && (_vert_pad+width<=63))
 	{
 		if(_hor_pad!=hor_pad)
 		{
 			for (i=0;i<2;i++)
 			{
-				for (j=0; j<width*2+1; j++)
+				for (j=0; j<=width*2; j++)
 				{
 					draw_pixel(i,_hor_pad-width+j,BLACK);
 					draw_pixel(62+i,_hor_pad-width+j,BLACK);
@@ -244,10 +241,10 @@ void draw_init_pads(byte _hor_pad, byte _vert_pad)
 		}
 
 		if(_vert_pad!=vert_pad)
-{
+		{
 			for (i=0;i<2;i++)
 			{
-				for (j=0; j<width*2+1; j++)
+				for (j=0; j<=width*2; j++)
 				{
 					draw_pixel(_vert_pad-width+j,i,BLACK);
 					draw_pixel(_vert_pad-width+j,i+100,BLACK);
@@ -255,8 +252,8 @@ void draw_init_pads(byte _hor_pad, byte _vert_pad)
 			}
 
 		}
-		hor_pad = _hor_pad;
-		vert_pad = _vert_pad;
+	hor_pad = _hor_pad;
+	vert_pad = _vert_pad;
 	}
 }
 
@@ -268,15 +265,9 @@ void draw_pads(byte _hor_pad, byte _vert_pad)
 
 {	
 
-	
-	byte i;
-	byte j;
-	
-	
 
-	
 
-	if ((_hor_pad+width<100) && (_hor_pad-width>=2) && (_vert_pad-width>0) && (_vert_pad+width<=62))
+	if ((_hor_pad+width<100) && (_hor_pad-width>=2) && (_vert_pad-width>=0) && (_vert_pad+width<=63))
 	{
 		if(_hor_pad!=hor_pad)
 		{
@@ -311,10 +302,10 @@ void draw_pads(byte _hor_pad, byte _vert_pad)
 		{
 			if(_vert_pad>vert_pad)
 			{
-				draw_pixel(vert_pad+width,0,BLACK);
-				draw_pixel(vert_pad+width,1,BLACK);
-				draw_pixel(vert_pad+width,100,BLACK);
-				draw_pixel(vert_pad+width,101,BLACK);
+				draw_pixel(_vert_pad+width,0,BLACK);
+				draw_pixel(_vert_pad+width,1,BLACK);
+				draw_pixel(_vert_pad+width,100,BLACK);
+				draw_pixel(_vert_pad+width,101,BLACK);
 
 				draw_pixel(vert_pad-width,0,WHITE);
 				draw_pixel(vert_pad-width,1,WHITE);
@@ -323,10 +314,10 @@ void draw_pads(byte _hor_pad, byte _vert_pad)
 			}
 			else 
 			{
-				draw_pixel(vert_pad-width,0,BLACK);
-				draw_pixel(vert_pad-width,1,BLACK);
-				draw_pixel(vert_pad-width,100,BLACK);
-				draw_pixel(vert_pad-width,101,BLACK);
+				draw_pixel(_vert_pad-width,0,BLACK);
+				draw_pixel(_vert_pad-width,1,BLACK);
+				draw_pixel(_vert_pad-width,100,BLACK);
+				draw_pixel(_vert_pad-width,101,BLACK);
 
 				draw_pixel(vert_pad+width,0,WHITE);
 				draw_pixel(vert_pad+width,1,WHITE);
@@ -336,10 +327,12 @@ void draw_pads(byte _hor_pad, byte _vert_pad)
 
 
 		}		
-
+		
 		hor_pad = _hor_pad;
 		vert_pad = _vert_pad;
+
 	}
+
 }
 
 
@@ -600,11 +593,11 @@ int main(void)
 	
 	interrupts_init();
 	pwm_init();
-	draw_init_pads(52,31);
-	draw_ball(31,52);
+	draw_init_pads(52,32);
+	draw_ball(32,52);
 	timer1_init();
 	adc_init();
-
+	_delay_ms(120);
 /*
 // This naive battery voltage meter does might require callibration with voltage supply in place of batteries.
 	
