@@ -13,12 +13,85 @@ byte key_status = 0x00;
 byte width=16;
 
 
-byte ball_array[5]={0b00001110,
-					0b00011111,
-					0b00011111,
-					0b00011111,
-					0b00001110,
-					};
+byte ball_array[5]=
+   {0b00001110,
+	0b00011111,
+	0b00011111,
+	0b00011111,
+	0b00001110
+   };
+byte zero_array[5]=
+   {0b00111110,
+	0b01000101,
+	0b01001001,
+	0b01010001,
+	0b00111110
+   };
+byte one_array[5]= 
+   {0b00000000,
+	0b01000010,
+	0b01111111,
+	0b01000000,
+	0b00000000
+   };
+byte two_array[5]= 
+   {0b01000010,
+	0b01100001,
+	0b01010001,
+	0b01001001,
+	0b01000110
+    };
+byte three_array[5]=
+   {0b00100001,
+	0b01000001,
+	0b01000101,
+	0b01001011,
+	0b00110001
+    };
+byte four_array[5]=
+   {0b00011000,
+	0b00010100,
+	0b00010010,
+	0b01111111,
+	0b00010000
+    };
+byte five_array[5]=
+   {0b00100111,
+	0b01000101,
+	0b01000101,
+	0b01000101,
+	0b00111001
+    };
+byte six_array[5]=
+   {0b00111100,
+	0b01001010,
+	0b01001001,
+	0b01001001,
+	0b00110000
+    };
+byte seven_array[5]=
+   {0b00000001,
+	0b01110001,
+	0b00001001,
+	0b00000101,
+	0b00000011
+    };
+byte eight_array[5]=
+   {0b00110110,
+	0b01001001,
+	0b01001001,
+	0b01001001,
+	0b00110110
+    };
+byte nine_array[5]=
+   {0b00000110,
+	0b01001001,
+	0b01001001,
+	0b00101001,
+	0b00011110
+    };
+
+byte *numbers[10]={zero_array,one_array,two_array,three_array,four_array,five_array,six_array,seven_array,eight_array,nine_array};
 
 byte vert_pad = 0;
 byte hor_pad = 0;
@@ -27,6 +100,12 @@ byte col_ball = 0;
 
 signed char dir_x = 1;
 signed char dir_y = 1;
+
+#define FLAG_REGISTER_MASK 255
+unsigned char Recognize_Event(void);
+
+//extern Interface Touchscreen_Data;
+//Interface Buffer_Touchscreen_Data;
 
 void RAM_write(byte spi_data)
 {
@@ -367,6 +446,41 @@ void draw_ball(byte _row_ball, byte _col_ball)
 	}
 }
 
+void draw_num(byte _number, byte _row_num, byte _col_num)
+
+
+{	
+	byte i;
+	byte j;
+	while(TRUE)
+	{
+		for (i=0;i<7;i++)
+		{
+			for (j=0;j<5;j++)
+			{
+				draw_pixel(_row_num-3+i,_col_num-2+j,WHITE);
+			}
+		}
+	
+	
+			for (i=0;i<7;i++)
+			{
+				for (j=0;j<5;j++)
+				{
+					byte num_pixel = (numbers[_number%10][j] & ( 1 << i )) >> i;
+					draw_pixel(_row_num-3+i,_col_num-2+j,num_pixel);
+				}
+			}
+	_col_num-=7;
+	_number/=10;
+	if (_number==0) break;
+	}
+}
+
+
+
+
+
 
 void restart()
 {
@@ -474,11 +588,11 @@ void key_check()
 			}
 		
 			if (move_buff) move_pads(move_buff);
-		/*	if (row > 63) row = 63;
+			if (row > 63) row = 63;
 			else if (row < 0) row = 0;
 			if (column > 101) column = 101;
 			else if (column < 0) column = 0;
-			draw_pixel (row, column, BLACK);*/
+			draw_pixel (row, column, BLACK);
 			_delay_ms(120);
 			OCR2 = brightness;
 			RAM_test_write();
@@ -553,8 +667,8 @@ void timer1_init()
  
 }
  
- 
-void adc_init()
+ /*
+void adc_init() //adc for battery
 {
    ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // Set ADC prescalar to 128 - 63KHz sample rate @ 16MHz
 
@@ -568,6 +682,95 @@ void adc_init()
    ADCSRA |= (1 << ADEN);  // Enable ADC
    ADCSRA |= (1 << ADSC);  // Start A2D Conversions 
 };
+*/
+void touchscreen_init()
+{
+   TS_LEFT(OFF);
+   TS_RIGHT(ON);
+   TS_LEFT_DIR(OUT);
+   TS_RIGHT_DIR(OUT);
+   ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // Set ADC prescalar to 128 - 63KHz sample rate @ 16MHz
+
+   ADMUX |= (1 << REFS0);//|(1 << REFS1);  // Set ADC reference to internal
+   ADMUX |= (1 << ADLAR); // Left adjust ADC result to allow easy 8 bit reading
+
+   ADMUX |= (1 <<MUX0); // ADC1
+
+   ADCSRA |= (1 << ADATE);  // Set ADC to Free-Running Mode
+
+   ADCSRA |= (1 << ADEN);  // Enable ADC
+   ADCSRA |= (1 << ADSC);  // Start A2D Conversions 
+};
+
+byte touch_standby()
+{
+   TS_LEFT(OFF);
+   TS_RIGHT(OFF);
+   TS_TOP(OFF);
+   TS_BOTTOM(ON);
+   TS_LEFT_DIR(OUT);
+   TS_RIGHT_DIR(IN);
+   TS_TOP_DIR(IN);
+   TS_BOTTOM_DIR(IN);
+
+   return GET_TS_BOTTOM;
+
+}
+
+byte get_touch_x()
+{
+
+
+   TS_TOP(OFF);
+   TS_BOTTOM(OFF);
+   TS_TOP_DIR(IN);
+   TS_BOTTOM_DIR(IN);
+
+   TS_LEFT(OFF);
+   TS_RIGHT(ON);
+   TS_LEFT_DIR(OUT);
+   TS_RIGHT_DIR(OUT);
+   ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // Set ADC prescalar to 128 - 63KHz sample rate @ 16MHz
+
+   ADMUX |= (1 << REFS0);//|(1 << REFS1);  // Set ADC reference to internal
+   ADMUX |= (1 << ADLAR); // Left adjust ADC result to allow easy 8 bit reading
+
+   ADMUX |= (1 <<MUX0); // ADC1
+
+   ADCSRA |= (1 << ADATE);  // Set ADC to Free-Running Mode
+
+   ADCSRA |= (1 << ADEN);  // Enable ADC
+   ADCSRA |= (1 << ADSC);  // Start A2D Conversions 
+   return ADCH;
+
+
+}
+byte get_touch_y()
+{
+   TS_LEFT(OFF);
+   TS_RIGHT(OFF);
+   TS_LEFT_DIR(IN);
+   TS_RIGHT_DIR(IN);
+
+   TS_TOP(OFF);
+   TS_BOTTOM(ON);
+   TS_TOP_DIR(OUT);
+   TS_BOTTOM_DIR(OUT);
+
+   ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // Set ADC prescalar to 128 - 63KHz sample rate @ 16MHz
+
+   ADMUX |= (1 << REFS1);//|(1 << REFS1);  // Set ADC reference to internal
+   ADMUX |= (1 << ADLAR); // Left adjust ADC result to allow easy 8 bit reading
+
+   ADMUX |= (1 <<MUX0); // ADC1
+
+   ADCSRA |= (1 << ADATE);  // Set ADC to Free-Running Mode
+
+   ADCSRA |= (1 << ADEN);  // Enable ADC
+   ADCSRA |= (1 << ADSC);  // Start A2D Conversions
+   return ADCH;
+
+}
 
 
 int main(void)
@@ -579,7 +782,7 @@ int main(void)
 	BAT_LOW_LED_DIR(OUT);					 //Set BATTERY LED I/Os as outputs.
 
 	LCD_BACK_LIGHT_DIR(OUT);				 //Make sure it is off before changing direction
-	LCD_BACK_LIGHT(OFF);    					//Set BATTERY LED I/Os as outputs.
+	LCD_BACK_LIGHT(ON);    					//Set BATTERY LED I/Os as outputs.
 
 	buttons_init();
 	
@@ -596,7 +799,7 @@ int main(void)
 	draw_init_pads(52,32);
 	draw_ball(32,52);
 	timer1_init();
-	adc_init();
+
 	_delay_ms(120);
 /*
 // This naive battery voltage meter does might require callibration with voltage supply in place of batteries.
@@ -615,9 +818,28 @@ int main(void)
 	if (battbuff>=5)	BAT_LOW_LED(ON);
 */
 
+
+
     while (TRUE)                //Master loop always true so always loop
-	{		
-		if(key_status) key_check();
+	{	
+                if(key_status) key_check();
+				cli();
+                if(touch_standby())
+                {                  
+                    BAT_LOW_LED(ON);
+					draw_num(get_touch_x(),20,20);
+					draw_num(get_touch_y(),40,40);
+					
+					
+					;
+                }
+				else
+				{                  
+                    BAT_LOW_LED(OFF);
+                }
+				sei();
+
+
     }
 
 }
@@ -633,11 +855,9 @@ ISR(TIMER2_OVF_vect)
 {
     pwm();
 	LCD_BACK_LIGHT(OFF);
-}
-*/
+}*/
 
 ISR (TIMER1_COMPA_vect)
 {
 move_ball();
 }
-
