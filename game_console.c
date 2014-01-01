@@ -828,6 +828,7 @@ int main(void)
                 {                  
                     BAT_LOW_LED(ON);
 					draw_num(get_touch_x(),20,20);
+					_delay_ms(20);
 					draw_num(get_touch_y(),40,40);
 					
 					
