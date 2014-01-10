@@ -447,33 +447,33 @@ void draw_ball(byte _row_ball, byte _col_ball)
 }
 
 void draw_num(byte _number, byte _row_num, byte _col_num)
-
-
 {	
 	byte i;
 	byte j;
+	
+	for (i=0;i<7;i++)
+	{
+		for (j=0;j<5;j++)
+		{
+			draw_pixel(_row_num-3+i,_col_num-2+j,WHITE);
+			draw_pixel(_row_num-3+i,_col_num-9+j,WHITE);
+			draw_pixel(_row_num-3+i,_col_num-16+j,WHITE);
+		}
+	}
+
 	while(TRUE)
 	{
-		for (i=0;i<7;i++)
+		for (i=0;i<7	;i++)
 		{
 			for (j=0;j<5;j++)
 			{
-				draw_pixel(_row_num-3+i,_col_num-2+j,WHITE);
+				byte num_pixel = (numbers[_number%10][j] & ( 1 << i )) >> i;
+				draw_pixel(_row_num-3+i,_col_num-2+j,num_pixel);
 			}
 		}
-	
-	
-			for (i=0;i<7;i++)
-			{
-				for (j=0;j<5;j++)
-				{
-					byte num_pixel = (numbers[_number%10][j] & ( 1 << i )) >> i;
-					draw_pixel(_row_num-3+i,_col_num-2+j,num_pixel);
-				}
-			}
-	_col_num-=7;
-	_number/=10;
-	if (_number==0) break;
+		_col_num-=7;
+		_number/=10;
+		if (_number==0) break;
 	}
 }
 
@@ -683,10 +683,11 @@ void adc_init() //adc for battery
    ADCSRA |= (1 << ADSC);  // Start A2D Conversions 
 };
 */
+/*
 void touchscreen_init()
 {
-   TS_LEFT(OFF);
-   TS_RIGHT(ON);
+   TS_LEFT(ON);
+   TS_RIGHT(OFF);
    TS_LEFT_DIR(OUT);
    TS_RIGHT_DIR(OUT);
    ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // Set ADC prescalar to 128 - 63KHz sample rate @ 16MHz
@@ -695,13 +696,14 @@ void touchscreen_init()
    ADMUX |= (1 << ADLAR); // Left adjust ADC result to allow easy 8 bit reading
 
    ADMUX |= (1 <<MUX0); // ADC1
+   ADMUX |= (1 <<MUX0); // ADC1
 
    ADCSRA |= (1 << ADATE);  // Set ADC to Free-Running Mode
 
    ADCSRA |= (1 << ADEN);  // Enable ADC
    ADCSRA |= (1 << ADSC);  // Start A2D Conversions 
 };
-
+*/
 byte touch_standby()
 {
    TS_LEFT(OFF);
@@ -717,6 +719,9 @@ byte touch_standby()
 
 }
 
+
+
+
 byte get_touch_x()
 {
 
@@ -726,8 +731,8 @@ byte get_touch_x()
    TS_TOP_DIR(IN);
    TS_BOTTOM_DIR(IN);
 
-   TS_LEFT(OFF);
-   TS_RIGHT(ON);
+   TS_LEFT(ON);
+   TS_RIGHT(OFF);
    TS_LEFT_DIR(OUT);
    TS_RIGHT_DIR(OUT);
    ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // Set ADC prescalar to 128 - 63KHz sample rate @ 16MHz
@@ -735,7 +740,8 @@ byte get_touch_x()
    ADMUX |= (1 << REFS0);//|(1 << REFS1);  // Set ADC reference to internal
    ADMUX |= (1 << ADLAR); // Left adjust ADC result to allow easy 8 bit reading
 
-   ADMUX |= (1 <<MUX0); // ADC1
+   ADMUX &= ~(1 <<MUX1); // ADC2 OFF
+   ADMUX |= (1 <<MUX0)|(1 <<MUX1); // ADC1 ON
 
    ADCSRA |= (1 << ADATE);  // Set ADC to Free-Running Mode
 
@@ -745,34 +751,37 @@ byte get_touch_x()
 
 
 }
+
 byte get_touch_y()
 {
+
    TS_LEFT(OFF);
    TS_RIGHT(OFF);
    TS_LEFT_DIR(IN);
    TS_RIGHT_DIR(IN);
 
-   TS_TOP(OFF);
-   TS_BOTTOM(ON);
+   TS_TOP(ON);
+   TS_BOTTOM(OFF);
    TS_TOP_DIR(OUT);
    TS_BOTTOM_DIR(OUT);
 
+
    ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // Set ADC prescalar to 128 - 63KHz sample rate @ 16MHz
 
-   ADMUX |= (1 << REFS1);//|(1 << REFS1);  // Set ADC reference to internal
+   ADMUX |= (1 << REFS0);//|(1 << REFS1);  // Set ADC reference to internal
    ADMUX |= (1 << ADLAR); // Left adjust ADC result to allow easy 8 bit reading
 
-   ADMUX |= (1 <<MUX0); // ADC1
+   ADMUX &= ~((1 <<MUX0)|(1 <<MUX1)); // ADC2 OFF
+   ADMUX |= (1 <<MUX1); // ADC1 ON
 
    ADCSRA |= (1 << ADATE);  // Set ADC to Free-Running Mode
 
    ADCSRA |= (1 << ADEN);  // Enable ADC
-   ADCSRA |= (1 << ADSC);  // Start A2D Conversions
+   ADCSRA |= (1 << ADSC);  // Start A2D Conversions 
    return ADCH;
 
+
 }
-
-
 int main(void)
 {	// Setting interrupts
 
@@ -823,22 +832,35 @@ int main(void)
     while (TRUE)                //Master loop always true so always loop
 	{	
                 if(key_status) key_check();
-				cli();
+				//cli();
                 if(touch_standby())
                 {                  
                     BAT_LOW_LED(ON);
-					draw_num(get_touch_x(),20,20);
-					_delay_ms(20);
-					draw_num(get_touch_y(),40,40);
-					
-					
-					;
+					_delay_ms(10);
+
+					byte i = 0;
+					byte x = 0;
+					byte y = 0;
+
+					for (i=0; i<3; i++)
+					{
+						x+= (get_touch_x()-30)/2.6;
+						y+= (get_touch_y()-18)/2.1;
+					}
+					x/=3;
+					y/=3;
+					draw_num(x,20,40); //Raw reads:
+					draw_num(y,40,40); //Raw reads: 
+					_delay_ms(10);
+					draw_pixel(x,y,BLACK);
                 }
 				else
 				{                  
                     BAT_LOW_LED(OFF);
+					/*draw_num(0,20,40);
+					draw_num(0,40,40);*/
                 }
-				sei();
+				//sei();
 
 
     }
