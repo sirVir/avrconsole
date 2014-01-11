@@ -714,6 +714,7 @@ byte touch_standby()
    TS_RIGHT_DIR(IN);
    TS_TOP_DIR(IN);
    TS_BOTTOM_DIR(IN);
+   _delay_ms(10);
 
    return GET_TS_BOTTOM;
 
@@ -805,8 +806,8 @@ int main(void)
 	
 	interrupts_init();
 	pwm_init();
-	draw_init_pads(52,32);
-	draw_ball(32,52);
+//	draw_init_pads(52,32);
+//	draw_ball(32,52);
 	timer1_init();
 
 	_delay_ms(120);
@@ -836,16 +837,18 @@ int main(void)
                 if(touch_standby())
                 {                  
                     BAT_LOW_LED(ON);
-					_delay_ms(10);
+					_delay_ms(1);
 
 					byte i = 0;
-					byte x = 0;
-					byte y = 0;
+					int x = 0;
+					int y = 0;
 
 					for (i=0; i<3; i++)
 					{
-						x+= (get_touch_x()-30)/2.6;
+						x+= (get_touch_x()-30)/1.7;
 						y+= (get_touch_y()-18)/2.1;
+					//	x+= get_touch_x()/3;
+					//	y+= get_touch_y()/3;
 					}
 					x/=3;
 					y/=3;
@@ -857,8 +860,8 @@ int main(void)
 				else
 				{                  
                     BAT_LOW_LED(OFF);
-					/*draw_num(0,20,40);
-					draw_num(0,40,40);*/
+					draw_num(0,20,40);
+					draw_num(0,40,40);
                 }
 				//sei();
 
