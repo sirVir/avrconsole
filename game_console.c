@@ -8,10 +8,16 @@ signed char row = 0;
 byte pixel = 0;
 byte key_buffer = EMPTY;
 byte frame_buffer[MAX_COLUMNS][MAX_PAGES];
+byte obstacle_buffer[10][2] = {0};
+byte obx = 17;
+byte oby = 22;
+byte obcnt =0;
 byte brightness = 0;
 byte key_status = 0x00;
 byte width=16;
-
+byte oc=0;
+byte oc2=0;
+byte limit = 40;
 
 byte ball_array[5]=
    {0b00001110,
@@ -95,8 +101,8 @@ byte *numbers[10]={zero_array,one_array,two_array,three_array,four_array,five_ar
 
 byte vert_pad = 0;
 byte hor_pad = 0;
-byte row_ball = 0;
-byte col_ball = 0;
+byte row_ball = 100;
+byte col_ball = 100;
 
 signed char dir_x = 1;
 signed char dir_y = 1;
@@ -292,7 +298,9 @@ void draw_pixel (byte _row, byte _column, byte _color)
 		pixel = (~(_BV(pixel)) & (frame_buffer[_column][page]));
 		frame_buffer[_column][page] = pixel;
 	}
+	cli();
 	LCD_data_tx(pixel);
+	sei();
 }
 
 
@@ -514,6 +522,13 @@ void move_ball()
 		if(((vert_pad>row_ball)?vert_pad-row_ball:row_ball-vert_pad)<width)
 			{dir_x=-dir_x;}
 		else restart();
+	}
+
+	byte i =0;
+	for (i=0; i<10; i++)
+	{
+		if ((((obstacle_buffer[i][0]>col_ball)?obstacle_buffer[i][0]-col_ball:col_ball-obstacle_buffer[i][0])<9) && (((obstacle_buffer[i][1]>row_ball)?obstacle_buffer[i][1]-row_ball:row_ball-obstacle_buffer[i][0])<9))
+		restart();
 	}
 
 	draw_ball(row_ball+dir_y, col_ball+dir_x);
@@ -783,6 +798,46 @@ byte get_touch_y()
 
 
 }
+
+void draw_obstacle()
+{
+	
+	if (oc<limit) oc++;
+	else
+	{
+		byte i =0;
+		byte j=0;
+		for (i =0; i<11; i++)
+		{
+			for (j =0; j<11; j++)
+			{
+				draw_pixel(oby-5+i,obx-5+j,BLACK);
+			}
+		}
+		obstacle_buffer[obcnt][0]=obx;
+		obstacle_buffer[obcnt][1]=oby;
+		
+		if(obcnt<10) obcnt++;
+		else restart();
+		oc=0;
+		limit = rand()%100+50;
+		obx = rand()%80 + 5;
+		oby = rand()%46 + 5;
+
+	}
+
+}
+void check_touch(byte _x, byte _y)
+{
+	byte i =0;
+	for (i=0; i<10; i++)
+	{
+		if ((((obstacle_buffer[i][0]>col_ball)?obstacle_buffer[i][0]-col_ball:col_ball-obstacle_buffer[i][0])<9) && (((obstacle_buffer[i][1]>row_ball)?obstacle_buffer[i][1]-row_ball:row_ball-obstacle_buffer[i][0])<9))
+		restart();
+	}
+}
+
+
 int main(void)
 {	// Setting interrupts
 
@@ -806,8 +861,8 @@ int main(void)
 	
 	interrupts_init();
 	pwm_init();
-//	draw_init_pads(52,32);
-//	draw_ball(32,52);
+	draw_init_pads(52,32);
+	draw_ball(32,52);
 	timer1_init();
 
 	_delay_ms(120);
@@ -852,16 +907,17 @@ int main(void)
 					}
 					x/=3;
 					y/=3;
-					draw_num(x,20,40); //Raw reads:
-					draw_num(y,40,40); //Raw reads: 
+				//	draw_num(x,20,40); //Raw reads:
+				//	draw_num(y,40,40); //Raw reads: 
 					_delay_ms(10);
-					draw_pixel(x,y,BLACK);
+				//	draw_pixel(x,y,BLACK);
+					check_touch(x,y);
                 }
 				else
 				{                  
                     BAT_LOW_LED(OFF);
-					draw_num(0,20,40);
-					draw_num(0,40,40);
+				//	draw_num(0,20,40);
+				//	draw_num(0,40,40);
                 }
 				//sei();
 
@@ -886,4 +942,5 @@ ISR(TIMER2_OVF_vect)
 ISR (TIMER1_COMPA_vect)
 {
 move_ball();
+draw_obstacle();
 }
