@@ -801,39 +801,63 @@ byte get_touch_y()
 
 void draw_obstacle()
 {
-	
-	if (oc<limit) oc++;
-	else
-	{
-		byte i =0;
-		byte j=0;
-		for (i =0; i<11; i++)
-		{
-			for (j =0; j<11; j++)
-			{
-				draw_pixel(oby-5+i,obx-5+j,BLACK);
-			}
-		}
-		obstacle_buffer[obcnt][0]=obx;
-		obstacle_buffer[obcnt][1]=oby;
-		
-		if(obcnt<10) obcnt++;
-		else restart();
-		oc=0;
-		limit = rand()%100+50;
-		obx = rand()%80 + 5;
-		oby = rand()%46 + 5;
 
+if (oc<limit) oc++;
+else
+{
+	byte i =0;
+	byte j=0;
+	for (i =0; i<11; i++)
+	{
+		for (j =0; j<11; j++)
+		{
+			draw_pixel(oby-5+i,obx-5+j,BLACK);
+		}
 	}
+	obstacle_buffer[obcnt][0]=obx;
+	obstacle_buffer[obcnt][1]=oby;
+	
+	if(obcnt<10) obcnt++;
+	else restart();
+	oc=0;
+	limit = rand()%100+50;
+	obx = rand()%80 + 5;
+	oby = rand()%46 + 5;
 
 }
+}
+
+void remove_obstacle(byte _id)
+{
+	byte locx = obstacle_buffer[_id][0];
+	byte locy = obstacle_buffer[_id][1];
+	byte i,j = 0;
+
+	for (i =0; i<11; i++)
+	{
+		for (j =0; j<11; j++)
+		{
+			draw_pixel(locy-5+i,locx-5+j,WHITE);
+		}
+	}
+
+	obstacle_buffer[_id][0]=0;
+	obstacle_buffer[_id][1]=0;
+	
+
+}
+
+
+
 void check_touch(byte _x, byte _y)
 {
 	byte i =0;
 	for (i=0; i<10; i++)
 	{
-		if ((((obstacle_buffer[i][0]>col_ball)?obstacle_buffer[i][0]-col_ball:col_ball-obstacle_buffer[i][0])<9) && (((obstacle_buffer[i][1]>row_ball)?obstacle_buffer[i][1]-row_ball:row_ball-obstacle_buffer[i][0])<9))
-		restart();
+		if ((((obstacle_buffer[i][0]>_y)?obstacle_buffer[i][0]-_y:_y-obstacle_buffer[i][0])<9) && (((obstacle_buffer[i][1]>_x)?obstacle_buffer[i][1]-_x:_x-obstacle_buffer[i][0])<9))
+		{
+			remove_obstacle(i);
+		}
 	}
 }
 
