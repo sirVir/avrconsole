@@ -1,16 +1,15 @@
 #include "game_console.h" 
 
-
+byte frame_buffer[MAX_COLUMNS][MAX_PAGES] = {0};
+byte obstacle_buffer[32][2] = {0};
 float vcc;
 byte page = 0;
 signed char column = 0;
 signed char row = 0;
 byte pixel = 0;
 byte key_buffer = EMPTY;
-byte frame_buffer[MAX_COLUMNS][MAX_PAGES];
-byte obstacle_buffer[10][2] = {0};
-byte obx = 17;
-byte oby = 22;
+byte obx = 21;
+byte oby = 13;
 byte obcnt =0;
 byte brightness = 0;
 byte key_status = 0x00;
@@ -18,6 +17,8 @@ byte width=16;
 byte oc=0;
 byte oc2=0;
 byte limit = 40;
+byte points = 0;
+int compare_value = 10000;
 
 byte ball_array[5]=
    {0b00001110,
@@ -26,6 +27,8 @@ byte ball_array[5]=
 	0b00011111,
 	0b00001110
    };
+
+
 byte zero_array[5]=
    {0b00111110,
 	0b01000101,
@@ -107,11 +110,6 @@ byte col_ball = 100;
 signed char dir_x = 1;
 signed char dir_y = 1;
 
-#define FLAG_REGISTER_MASK 255
-unsigned char Recognize_Event(void);
-
-//extern Interface Touchscreen_Data;
-//Interface Buffer_Touchscreen_Data;
 
 void RAM_write(byte spi_data)
 {
@@ -201,6 +199,7 @@ void SPI_MasterInit(void)
 
 void LCD_command_tx(byte cData)
 {
+	cli();
 	LCD_CS(LOW);
 	LCD_CD(COMMAND);
     // Start transmission
@@ -208,10 +207,12 @@ void LCD_command_tx(byte cData)
     // Wait for transmission complete
     while (!SPI_FINISHED);
 	LCD_CS(HIGH);
+	sei();
 }
 
 void LCD_data_tx(byte cData)
-{
+{	
+	cli();
 	LCD_CS(LOW); 
 	LCD_CD(DATA);
     // Start transmission
@@ -219,6 +220,7 @@ void LCD_data_tx(byte cData)
     // Wait for transmission complete
     while (!SPI_FINISHED);
 	LCD_CS(HIGH);
+	sei();
 }
 
 byte select_page (byte page)
@@ -288,8 +290,10 @@ void draw_pixel (byte _row, byte _column, byte _color)
 {	
 	page = _row/8;
 	pixel = _row%8;
+	cli();
 	select_page(page);
 	select_column(_column);
+	sei();
 	if ((_color!=WHITE)){
 		pixel = (_BV(pixel) | (frame_buffer[_column][page]));
 		frame_buffer[_column][page] = pixel;
@@ -298,9 +302,7 @@ void draw_pixel (byte _row, byte _column, byte _color)
 		pixel = (~(_BV(pixel)) & (frame_buffer[_column][page]));
 		frame_buffer[_column][page] = pixel;
 	}
-	cli();
 	LCD_data_tx(pixel);
-	sei();
 }
 
 
@@ -389,6 +391,8 @@ void draw_pads(byte _hor_pad, byte _vert_pad)
 		{
 			if(_vert_pad>vert_pad)
 			{
+
+				
 				draw_pixel(_vert_pad+width,0,BLACK);
 				draw_pixel(_vert_pad+width,1,BLACK);
 				draw_pixel(_vert_pad+width,100,BLACK);
@@ -492,16 +496,39 @@ void draw_num(byte _number, byte _row_num, byte _col_num)
 
 void restart()
 {
-	int i = 0;
-	for (i=0; i<8; i++)
+	cli();
+/*	int i = 0;
+	for (i=0; i<5; i++)
 	{
 		color_screen(BLACK);
 		_delay_ms(100);
 		color_screen(WHITE);
 		_delay_ms(100);
-	}
-	draw_ball(31,52);
-	draw_screen();
+	}*/
+	UP_BUTTON_DIR(OUT); //Set all the BUTTONs I/Os as input.
+	DOWN_BUTTON_DIR(OUT);
+	LEFT_BUTTON_DIR(OUT);
+	RIGHT_BUTTON_DIR(OUT);
+	F_A_BUTTON_DIR(OUT);
+	F_B_BUTTON_DIR(OUT);
+	F_C_BUTTON_DIR(OUT);
+
+	UP_BUTTON_PULLUP(OFF); //Set all the BUTTON's internal pullup resistors
+	DOWN_BUTTON_PULLUP(OFF);
+	LEFT_BUTTON_PULLUP(OFF);
+	RIGHT_BUTTON_PULLUP(OFF);
+	F_A_BUTTON_PULLUP(OFF);
+	F_B_BUTTON_PULLUP(OFF);
+	F_C_BUTTON_PULLUP(OFF);
+	
+	color_screen(WHITE);
+	draw_num(points,30,40); //Raw reads:
+	byte i=0;
+	for (i=0;i<100;i++)
+	{
+		_delay_ms(100);
+	};
+	
 }
 
 void move_ball()
@@ -513,22 +540,24 @@ void move_ball()
 	if (row_ball <= 4 || row_ball >= 59)
 	{	
 		if(((hor_pad>col_ball)?hor_pad-col_ball:col_ball-hor_pad)<width)
-			{dir_y=-dir_y;}
-		else restart();
+			{dir_y=-dir_y;
+			points++;}
+		else restart(); // if crashed with screen's edge
 	}
 
 	if (col_ball <= 4 || col_ball >= 97)
 	{
 		if(((vert_pad>row_ball)?vert_pad-row_ball:row_ball-vert_pad)<width)
-			{dir_x=-dir_x;}
-		else restart();
+			{dir_x=-dir_x;
+			points++;}
+		else restart(); // if crashed with screen's edge
 	}
 
 	byte i =0;
-	for (i=0; i<10; i++)
+	for (i=0; i<32; i++)
 	{
-		if ((((obstacle_buffer[i][0]>col_ball)?obstacle_buffer[i][0]-col_ball:col_ball-obstacle_buffer[i][0])<9) && (((obstacle_buffer[i][1]>row_ball)?obstacle_buffer[i][1]-row_ball:row_ball-obstacle_buffer[i][0])<9))
-		restart();
+		if ((((obstacle_buffer[i][0]>=col_ball)?obstacle_buffer[i][0]-col_ball:col_ball-obstacle_buffer[i][0])<9) && (((obstacle_buffer[i][1]>=row_ball)?obstacle_buffer[i][1]-row_ball:row_ball-obstacle_buffer[i][1])<9) && row_ball!=0 && col_ball!=0)
+		restart(); // if collision dedected
 	}
 
 	draw_ball(row_ball+dir_y, col_ball+dir_x);
@@ -675,7 +704,7 @@ void timer1_init()
     TCCR1B |= (1 << WGM12)|(1 << CS11)|(1 << CS10);
  
     // initialize compare value
-    OCR1A = 16000;
+    OCR1A = compare_value;
  
     // enable compare interrupt
     TIMSK |= (1 << OCIE1A);
@@ -801,30 +830,52 @@ byte get_touch_y()
 
 void draw_obstacle()
 {
-
-if (oc<limit) oc++;
-else
-{
-	byte i =0;
-	byte j=0;
-	for (i =0; i<11; i++)
-	{
-		for (j =0; j<11; j++)
+		if (oc<limit) oc++;
+		else
 		{
-			draw_pixel(oby-5+i,obx-5+j,BLACK);
-		}
-	}
-	obstacle_buffer[obcnt][0]=obx;
-	obstacle_buffer[obcnt][1]=oby;
-	
-	if(obcnt<10) obcnt++;
-	else restart();
-	oc=0;
-	limit = rand()%100+50;
-	obx = rand()%80 + 5;
-	oby = rand()%46 + 5;
+			byte z =0;
+			for (z=0; z<32; z++)
+			{
+				if (obstacle_buffer[z][0]==0)
+				{
+					byte i=0;
+					byte j=0;
+					while(TRUE)
+					{
+						if ((((obx>=col_ball)?obx-col_ball:col_ball-obx)<12) && (((oby>=row_ball)?oby-row_ball:row_ball-oby)<12) && row_ball!=0 && col_ball!=0)
+						{
+							obx = rand()%86 + 10;
+							oby = rand()%48 + 10;
+						}
+						else break;
+					}
+					compare_value-=200;
+					OCR1A = compare_value;
 
-}
+					for (i =0; i<11; i++)
+					{
+						for (j =0; j<11; j++)
+						{
+							draw_pixel(oby-5+i,obx-5+j,BLACK);
+						}
+					}
+					draw_screen();
+					obstacle_buffer[z][0]=obx;
+					obstacle_buffer[z][1]=oby;
+	
+					oc=0;
+					limit = rand()%100+50;
+					obx = rand()%86 + 10;
+					oby = rand()%48 + 10;
+
+					return;
+				}
+				else continue;
+			}
+			restart();
+
+		}
+
 }
 
 void remove_obstacle(byte _id)
@@ -886,7 +937,9 @@ int main(void)
 	interrupts_init();
 	pwm_init();
 	draw_init_pads(52,32);
+
 	draw_ball(32,52);
+	
 	timer1_init();
 
 	_delay_ms(120);
@@ -943,7 +996,7 @@ int main(void)
 				//	draw_num(0,20,40);
 				//	draw_num(0,40,40);
                 }
-				//sei();
+				//sei(); 
 
 
     }
